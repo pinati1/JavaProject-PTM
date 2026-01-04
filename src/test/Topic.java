@@ -12,6 +12,14 @@ public class Topic {
         this.name=name;
     }
 
+    public List<Agent> getSubs() {
+        return subs;
+    }
+
+    public List<Agent> getPubs() {
+        return pubs;
+    }
+
     public void subscribe(Agent a){
         this.subs.add(a);
     }
