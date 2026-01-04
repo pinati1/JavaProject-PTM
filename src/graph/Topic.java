@@ -1,5 +1,5 @@
 //package project_biu.graph;
-package test;
+package graph;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +10,13 @@ public class Topic {
     Topic(String name){
 
         this.name=name;
+    }
+    public List<Agent> getSubs() {
+        return subs;
+    }
+
+    public List<Agent> getPubs() {
+        return pubs;
     }
 
     public void subscribe(Agent a){

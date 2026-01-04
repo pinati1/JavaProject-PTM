@@ -1,4 +1,4 @@
-package test;
+package graph;
 
 
 import java.util.Collection;
@@ -10,7 +10,7 @@ public class TopicManagerSingleton {
 
     public static TopicManager get(){ return TopicManager.instance; }
 
-    
+
     public static class TopicManager{
 
         private static final TopicManager instance = new TopicManager();
