@@ -1,8 +1,7 @@
-package test;
+package configs;
 
 import java.util.function.BinaryOperator;
-
-import test.TopicManagerSingleton.TopicManager;
+import graph.*;
 
 public class BinOpAgent implements Agent {
 
@@ -24,7 +23,7 @@ public class BinOpAgent implements Agent {
         this.operator = operator;
 
 
-        TopicManager tm = TopicManagerSingleton.get();
+      TopicManagerSingleton.TopicManager tm = TopicManagerSingleton.get();
 
         tm.getTopic(input1).subscribe(this);
         tm.getTopic(input2).subscribe(this);

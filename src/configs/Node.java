@@ -1,4 +1,4 @@
-package test;
+package configs;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,7 @@ public class Node {
 
     private         String name;
     private         List<Node> edges;
-    private         Message msg;
+    private Message msg;
 
     public Node(String name){
         this.name = name;
