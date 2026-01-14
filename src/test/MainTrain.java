@@ -1,57 +1,72 @@
 package test;
 
-import test.TopicManagerSingleton.TopicManager;
+import java.util.Random;
 
-public class MainTrain { // just a simple tests about the parallel agent to get you going...
 
-    static String tn=null;
-
-    public static class TestAgent1 implements Agent{
-        
-        public void reset() {
-        }
-        public void close() {
-        }
-        public String getName(){
-            return getClass().getName();
-        }
-
-        @Override
-        public void callback(String topic, Message msg) {
-            tn=Thread.currentThread().getName();
-        }
-        
-    }
+public class MainTrain {
     
     public static void main(String[] args) {
-        TopicManager tm=TopicManagerSingleton.get();
-        int tc=Thread.activeCount();
-        ParallelAgent pa=new ParallelAgent(new TestAgent1(), 10);
-        tm.getTopic("A").subscribe(pa);
+        int c=Thread.activeCount();
+        GenericConfig gc=new GenericConfig();
+        gc.setConfFile("test/simple.conf");
+        gc.create();
 
-        if (Thread.activeCount()!=tc+1){
-            System.out.println("your ParallelAgent does not open a thread (-10)");
+        if(Thread.activeCount()!=c+2){
+            System.out.println("PTM2: the configuration did not create the right number of threads.");
         }
+        
+        double result[]={0.0};
 
-
-        tm.getTopic("A").publish(new Message("a"));
-        try { Thread.sleep(100);} catch (InterruptedException e) {}
-        if(tn==null){
-            System.out.println("your ParallelAgent didn't run the wrapped agent callback (-20)");
-        }else{
-            if(tn.equals(Thread.currentThread().getName())){
-                System.out.println("the ParallelAgent does not run the wrapped agent in a different thread (-10)");                
+        TopicManagerSingleton.get().getTopic("D").subscribe(new Agent() {
+            
+            @Override
+            public String getName() {
+                return "";
             }
-            String last=tn;
-            tm.getTopic("A").publish(new Message("a"));
-            try { Thread.sleep(100);} catch (InterruptedException e) {}
-            if(!last.equals(tn))
-                System.out.println("all messages should be processed in the same thread of ParallelAgent (-10)");
+            
+            @Override
+            public void reset() {
+            }
+            
+            @Override
+            public void callback(String topic, Message msg) {
+                result[0]=msg.asDouble;                
+            }
+            
+            @Override
+            public void close() {
+            }
+            
+        });
+
+        Random r=new Random();
+        for(int i=0;i<9;i++){
+            int x,y;
+            x=r.nextInt(1000);
+            y=r.nextInt(1000);
+            TopicManagerSingleton.get().getTopic("A").publish(new Message(x));
+            TopicManagerSingleton.get().getTopic("B").publish(new Message(y));
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {}
+
+            if(result[0]!=x+y+1){
+                System.out.println("your agents did not produce the desierd result (-10)");
+            }
         }
 
-        pa.close();
+        gc.close();
 
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {}
+
+        if(Thread.activeCount()!=c){
+            System.out.println("your code did not close all threads (-10)");
+        }
 
         System.out.println("done");
+        
     }
 }
