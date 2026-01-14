@@ -1,26 +1,50 @@
-package project_biu.graph;
+package test;
+
+
+
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Topic {
     public final String name;
-    Topic(String name){
-        this.name=name;
+    private List<Agent> subs = new ArrayList<>();
+    private List<Agent> pubs = new ArrayList<>();
+
+    Topic(String name) {
+
+        this.name = name;
     }
 
-    public void subscribe(Agent a){
-    }
-    public void unsubscribe(Agent a){
-    }
-
-    public void publish(Message m){
+    public List<Agent> getSubs() {
+        return subs;
     }
 
-    public void addPublisher(Agent a){
+    public List<Agent> getPubs() {
+        return pubs;
     }
 
-    public void removePublisher(Agent a){
+    public void subscribe(Agent a) {
+        this.subs.add(a);
+    }
+
+    public void unsubscribe(Agent a) {
+        this.subs.remove(a);
+    }
+
+    public void publish(Message m) {
+        for (Agent a : subs) {
+            a.callback(this.name, m);
+        }
+
+    }
+
+    public void addPublisher(Agent a) {
+        this.pubs.add(a);
+    }
+
+    public void removePublisher(Agent a) {
+        this.pubs.remove(a);
     }
 
 
