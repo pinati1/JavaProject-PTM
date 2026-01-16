@@ -24,7 +24,13 @@ public class GenericConfig implements Config {
         try (Scanner scanner = new Scanner(new File(confFileName))) {
             while (scanner.hasNextLine()) {
                 String className = scanner.nextLine();
+                if (className.isEmpty()) continue;
+
+
+                if (!scanner.hasNextLine()) break;
                 String[] subs = scanner.nextLine().split(",");
+
+                if (!scanner.hasNextLine()) break;
                 String[] pubs = scanner.nextLine().split(",");
 
                 for (int i = 0; i < subs.length; i++) subs[i] = subs[i].trim();
