@@ -1,6 +1,8 @@
 package configs;
 
 
+import graph.Agent;
+
 public class MathExampleConfig implements Config {
 
     @Override
@@ -19,5 +21,7 @@ public class MathExampleConfig implements Config {
     public int getVersion() {
         return 1;
     }
-    
+
+    @Override
+    public  void close() {}
 }
