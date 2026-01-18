@@ -1,5 +1,6 @@
 package configs;
 
+import graph.Message;
 import java.util.ArrayList;
 import java.util.List;
 
