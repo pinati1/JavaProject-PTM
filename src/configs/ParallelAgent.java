@@ -1,10 +1,7 @@
-package test;
+package configs;
+import graph.*;
 
-import javax.security.auth.callback.Callback;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-
-public class ParallelAgent implements Agent{
+public class ParallelAgent implements Agent {
     private Agent agent;
 
     public ParallelAgent(Agent agent,int capacity){
