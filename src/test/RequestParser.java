@@ -2,14 +2,66 @@ package test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.Map;
+import java.util.*;
 
 public class RequestParser {
 
     public static RequestInfo parseRequest(BufferedReader reader) throws IOException {
-		// implement
-        
-        return null;
+        String requestLine = reader.readLine();
+        if (requestLine == null || requestLine.isEmpty()) return null;
+
+        String[] parts = requestLine.split(" ");
+        if (parts.length < 2) return null;
+
+        String httpCommand = parts[0];
+        String fullUri = parts[1];
+        Map<String, String> parameters = new HashMap<>();
+
+        String[] uriParts = fullUri.split("\\?", 2);
+        String path = uriParts[0];
+
+        if (uriParts.length > 1) {
+            String queryString = uriParts[1];
+            for (String pair : queryString.split("&")) {
+                String[] keyValue = pair.split("=", 2);
+                if (keyValue.length == 2) {
+                    parameters.put(keyValue[0], keyValue[1]);
+                }
+            }
+        }
+
+
+        List<String> segmentsList = new ArrayList<>();
+        for (String segment : path.split("/")) {
+            if (!segment.isEmpty()) {
+                segmentsList.add(segment);
+            }
+        }
+        String[] uriSegments = segmentsList.toArray(new String[0]);
+
+        String line;
+        int contentLength = 0;
+        while ((line = reader.readLine()) != null && !line.isEmpty()) {
+            if (line.toLowerCase().startsWith("content-length:")) {
+                contentLength = Integer.parseInt(line.split(":")[1].trim());
+            }
+        }
+
+        line = reader.readLine();
+        if (line != null && line.startsWith("filename=")) {
+            String filename = line.split("=", 2)[1].replace("\"", "");
+            parameters.put("filename", filename);
+            reader.readLine();
+        }
+
+        byte[] content = new byte[contentLength];
+        if (contentLength > 0) {
+            for (int i = 0; i < contentLength; i++) {
+                content[i] = (byte) reader.read();
+            }
+        }
+
+        return new RequestInfo(httpCommand, fullUri, uriSegments, parameters, content);
     }
 	
 	// RequestInfo given internal class
