@@ -1,6 +1,8 @@
-package test;
+package configs;
 
-import test.TopicManagerSingleton.TopicManager;
+import graph.Agent;
+import graph.Message;
+import graph.TopicManagerSingleton;
 
 public class IncAgent implements Agent {
 
@@ -23,7 +25,7 @@ public class IncAgent implements Agent {
     public void reset(){x=0;}
 
     @Override
-    public void callback(String topic ,Message msg){
+    public void callback(String topic , Message msg){
         if(this.sub.equals(topic)) {
             this.x=msg.asDouble;
         }

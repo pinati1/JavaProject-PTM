@@ -1,4 +1,4 @@
-package parallel;
+package configs;
 import graph.*;
 
 public class ParallelAgent implements Agent {

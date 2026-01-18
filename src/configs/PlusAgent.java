@@ -1,6 +1,8 @@
-package test;
+package configs;
 
-import test.TopicManagerSingleton.TopicManager;
+import graph.Agent;
+import graph.Message;
+import graph.TopicManagerSingleton;
 
 public class PlusAgent implements Agent {
 
@@ -31,7 +33,7 @@ public class PlusAgent implements Agent {
         this.y = 0;
     }
     @Override
-    public void callback(String topic,Message msg){
+    public void callback(String topic, Message msg){
         if(topic.equals(inputTopic1)){
             x= msg.asDouble;
         } else if (topic.equals(inputTopic2)) {
