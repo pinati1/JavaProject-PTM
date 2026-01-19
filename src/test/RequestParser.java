@@ -47,20 +47,29 @@ public class RequestParser {
             }
         }
 
-        line = reader.readLine();
-        if (line != null && line.startsWith("filename=")) {
-            String filename = line.split("=", 2)[1].replace("\"", "");
-            parameters.put("filename", filename);
-            reader.readLine();
-        }
+        if (reader.ready()) {
+            reader.mark(1000);
+            line = reader.readLine();
 
-        byte[] content = new byte[contentLength];
-        if (contentLength > 0) {
-            for (int i = 0; i < contentLength; i++) {
-                content[i] = (byte) reader.read();
+            if (line != null && line.startsWith("filename=")) {
+                String filename = line.split("=", 2)[1];
+                parameters.put("filename", filename);
+                if (reader.ready()) reader.readLine();
+            } else {
+                try {
+                    reader.reset();
+                } catch (IOException e) {
+                }
+            }
+        }
+        StringBuilder contentBuilder = new StringBuilder();
+        if (reader.ready()) {
+            while ((line = reader.readLine()) != null && !line.isEmpty()) {
+                contentBuilder.append(line).append("\n");
             }
         }
 
+        byte[] content = contentBuilder.toString().getBytes();
         return new RequestInfo(httpCommand, fullUri, uriSegments, parameters, content);
     }
 	

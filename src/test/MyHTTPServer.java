@@ -6,9 +6,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.HashMap;
+
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -20,29 +22,42 @@ public class MyHTTPServer extends Thread implements HTTPServer{
     private         final int nThreads;
     private         final ExecutorService threadPool;
     private         volatile boolean stop = false;
-    private         Map<String,Servlet> GETreq = new HashMap<>();
-    private         Map<String,Servlet> POSTreq = new HashMap<>();
-    private         Map<String,Servlet> DELETEreq = new HashMap<>();
+    private         ServerSocket serverSocket;
+    private         Map<String,Servlet> GETreq = new ConcurrentHashMap<>();
+    private         Map<String,Servlet> POSTreq = new ConcurrentHashMap<>();
+    private         Map<String,Servlet> DELETEreq = new ConcurrentHashMap<>();
 
     public MyHTTPServer(int port,int nThreads){
         this.port= port;
         this.nThreads =nThreads;
         this.threadPool = Executors.newFixedThreadPool(nThreads);
     }
-
+    @Override
     public void addServlet(String httpCommanmd, String uri, Servlet s){
         switch (httpCommanmd.toUpperCase()){
-            case "GET"-> GETreq.put(uri,s);
-            case "POST"-> POSTreq.put(uri,s);
-            case "DELETE"->DELETEreq.put(uri,s);
+            case "GET":
+                GETreq.put(uri, s);
+                break;
+            case "POST":
+                POSTreq.put(uri, s);
+                break;
+            case "DELETE":
+                DELETEreq.put(uri, s);
+                break;
         }
     }
-
+    @Override
     public void removeServlet(String httpCommanmd, String uri){
         switch (httpCommanmd.toUpperCase()){
-            case "GET"->GETreq.remove(uri);
-            case "POST"->POSTreq.remove(uri);
-            case "DELETE"->DELETEreq.remove(uri);
+            case "GET":
+                GETreq.remove(uri);
+                break;
+            case "POST":
+                POSTreq.remove(uri);
+                break;
+            case "DELETE":
+                DELETEreq.remove(uri);
+                break;
         }
     }
     private void handleClient(Socket clientSocket){
@@ -50,16 +65,24 @@ public class MyHTTPServer extends Thread implements HTTPServer{
                 (new InputStreamReader(clientSocket.getInputStream()));
                 OutputStream toClient = clientSocket.getOutputStream()) {
                 RequestParser.RequestInfo reqInfo = RequestParser.parseRequest(reader);
-                Map<String,Servlet> currentMap = switch (reqInfo.getHttpCommand().toUpperCase()){
-                  case "GET" -> this.GETreq;
-                  case "POST" ->this.POSTreq;
-                  case "DELETE" ->this.DELETEreq;
-                  default -> null;
-                };
+                if (reqInfo == null) return;
+                Map<String, Servlet> currentMap = null;
+                switch (reqInfo.getHttpCommand().toUpperCase()) {
+                    case "GET":
+                        currentMap = this.GETreq;
+                        break;
+                    case "POST":
+                        currentMap = this.POSTreq;
+                        break;
+                    case "DELETE":
+                        currentMap = this.DELETEreq;
+                        break;
+                }
                 if(currentMap!=null){
                     Servlet s = getLongestMatch(currentMap,reqInfo.getUri());
                     if(s!=null){
                         s.handle(reqInfo,toClient);
+                        toClient.flush();
                     }
                 }
         }catch (IOException e){
@@ -80,29 +103,45 @@ public class MyHTTPServer extends Thread implements HTTPServer{
         }
         return bestMatch!=null ? map.get(bestMatch) : null;
     }
-
+    @Override
     public void run() {
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
+        try (ServerSocket ss = new ServerSocket(port)) {
+            this.serverSocket = ss;
             serverSocket.setSoTimeout(1000);
-            while(!stop){
-                try{
+            while (!stop) {
+                try {
                     Socket clientSocket = serverSocket.accept();
-                    threadPool.execute(()->handleClient(clientSocket));
-                }catch (SocketTimeoutException e){}
+                    threadPool.execute(() -> handleClient(clientSocket));
+                } catch (SocketTimeoutException e) {
+                } catch (SocketException e) {
+                    if (stop) break;
+                    throw e;
+                }
             }
         } catch (IOException e) {
             if (!stop) e.printStackTrace();
         }
     }
 
-    public void close(){
+    @Override
+    public void close() {
+        if (stop) return;
         stop = true;
+
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         threadPool.shutdown();
         try {
-            if(!threadPool.awaitTermination(2, TimeUnit.SECONDS)){
+            if (!threadPool.awaitTermination(2, TimeUnit.SECONDS)) {
                 threadPool.shutdownNow();
             }
-        }catch (InterruptedException e){
+        } catch (InterruptedException e) {
             threadPool.shutdownNow();
         }
     }
